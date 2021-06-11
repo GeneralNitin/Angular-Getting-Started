@@ -1,4 +1,5 @@
-import { Component, OnInit } from "@angular/core";
+import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Subscription } from "rxjs";
 import { IProduct } from "./product";
 import { ProductService } from "./product.service";
 
@@ -8,7 +9,17 @@ import { ProductService } from "./product.service";
 	styleUrls: ['./product-list.component.css']
 })
 
-export class ProductListComponent implements OnInit {
+export class ProductListComponent implements OnInit, OnDestroy {
+
+	pageTitle: string = 'Product List';
+	imageWidth: number = 50;
+	imageMargin: number = 2;
+	showImage: boolean = false;
+	// listFilter: string = 'cart';
+	products: IProduct[] = [];
+	filteredProducts: IProduct[] = [];
+	errorMessage: string = '';
+	sub!: Subscription;
 
 	/* Standard way to handling Dependency Injection in TypeScript */
 	// private _productService;
@@ -24,17 +35,22 @@ export class ProductListComponent implements OnInit {
 		console.info("In OnInit");
 		// this._listFilter = 'cart'; // since it's a private var it doesn't triggers the onChange implemented using setter
 		// this.listFilter = 'cart'; // this will call the setter method and will show filtered data on first time load itself
-		this.products = this.productService.getProducts();
-		this.filteredProducts = this.products;
+		// this.products = this.productService.getProducts();
+
+		this.sub = this.productService.getProducts().subscribe({
+			next: products => {
+				this.products = products;
+				this.filteredProducts = this.products;
+			},
+			error: err => this.errorMessage = err
+		});
+		// this.filteredProducts = this.products;
 	}
 
-	pageTitle: string = 'Product List';
-	imageWidth: number = 50;
-	imageMargin: number = 2;
-	showImage: boolean = false;
-	// listFilter: string = 'cart';
-	products: IProduct[] = [];
-	filteredProducts: IProduct[] = [];
+	ngOnDestroy(): void {
+		this.sub.unsubscribe();
+	}
+
 
 	private _listFilter: string = '';
 	get listFilter(): string {
